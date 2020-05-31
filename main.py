@@ -17,8 +17,10 @@ shutdown = False
 active = False
 light = False
 sound = False
-manual = False
+manualLight = False
+manualSound = False
 said = False
+saidSound = False
 
 def switchLight():
     global light
@@ -29,29 +31,31 @@ def switchLight():
 def switchSound():
     global sound
     sound = not sound
-    soundMotor.run_target(500, 65, wait=True)
+    soundMotor.run_target(500, 63, wait=True)
     soundMotor.run_target(500, 0, wait=False)
 
-ev3.speaker.set_volume(100, which='_all_')
-motor.reset_angle(20)
-soundMotor.reset_angle(0)
-motor.run_target(500, 75, wait=True)
+def manualSoundControlButtons():
+    global saidSound
+    ''' checking buttons for manual sound control '''
+    if Button.BEACON in infraredSensor.buttons(2):
+        if saidSound == True:
+            pass
+        elif manualSound == True:
+            ev3.speaker.play_file(SoundFile.DETECTED)
+            saidSound = True
+        else:
+            ev3.speaker.play_file(SoundFile.ERROR)
+            saidSound = True
+    else:
+        saidSound = False
 
-while shutdown == False:
-
-    print("running")
-
-    ''' finishing the programm '''
-    if Button.LEFT_UP in infraredSensor.buttons(2):
-        shutdown = True
-
-    if Button.RIGHT_UP in infraredSensor.buttons(1):
-        manual = True
-    
+def manualLightControlButtons():
+    global said
+    ''' checking buttons for manual sound control '''
     if Button.BEACON in infraredSensor.buttons(1):
         if said == True:
             pass
-        elif manual == True:
+        elif manualLight == True:
             ev3.speaker.play_file(SoundFile.DETECTED)
             said = True
         else:
@@ -60,30 +64,16 @@ while shutdown == False:
     else:
         said = False
 
-    ''' manual mode '''
-    while manual == True:
-        if light == False:
-            if Button.LEFT_UP in infraredSensor.buttons(1):
-                switchLight()
-        else:
-            if Button.LEFT_DOWN in infraredSensor.buttons(1):
-                switchLight()
-        if Button.BEACON in infraredSensor.buttons(1):
-            if said == True:
-                pass
-            elif manual == True:
-                ev3.speaker.play_file(SoundFile.DETECTED)
-                said = True
-            else:
-                ev3.speaker.play_file(SoundFile.ERROR)
-                said = True
-        else:
-            said = False
-        if Button.RIGHT_DOWN in infraredSensor.buttons(1):
-            manual = False
+def soundControl():
+    global active, sound
+    ''' controlling the sound in the room '''
+    if active == True and sound == False:
+        switchSound()
+    elif active == False and sound == True:
+        switchSound()
 
-
-
+def lightControl():
+    global active, light
     ''' controlling the light in the room '''
     if active == True and light == False:
         if colorSensor.ambient() < 20:
@@ -94,23 +84,119 @@ while shutdown == False:
     elif active == False and light == True:
         switchLight()
 
-    ''' controlling the sound in the room '''
-    if active == True and sound == False:
-        switchSound()
-    elif active == False and sound == True:
-        switchSound()
+def manualLightControl():
+    global light, manualLight
+    if light == False:
+        if Button.LEFT_UP in infraredSensor.buttons(1):
+            switchLight()
+    else:
+        if Button.LEFT_DOWN in infraredSensor.buttons(1):
+            switchLight()
+    if Button.RIGHT_DOWN in infraredSensor.buttons(1):
+        manualLight = False
 
-    ''' controlling the room state '''
-    if sensor.distance() < 35:
-        if active == True:
-            ev3.speaker.play_file(SoundFile.GOODBYE)
-            active = False
-        else:
-            if colorSensor.ambient() < 20:
-                switchLight()
-            ev3.speaker.play_file(SoundFile.HELLO)
-            active = True
+def manualSoundControl():
+    global sound, manualSound
+    if sound == False:
+        if Button.LEFT_UP in infraredSensor.buttons(2):
+            switchSound()
+    else:
+        if Button.LEFT_DOWN in infraredSensor.buttons(2):
+            switchSound()
 
+    if Button.RIGHT_DOWN in infraredSensor.buttons(2):
+        manualSound = False
+
+# system setup
+ev3.speaker.set_volume(100, which='_all_')
+motor.reset_angle(20)
+soundMotor.reset_angle(0)
+motor.run_target(500, 75, wait=True)
+
+# main project loop
+while shutdown == False:
+
+    if manualLight == True and manualSound == True:
+        ''' finishing the progamm '''
+        if Button.LEFT_UP in infraredSensor.buttons(3):
+            shutdown = True
+
+        manualLightControl()
+        manualSoundControl()
+
+        manualLightControlButtons()
+        manualSoundControlButtons()
+
+
+    elif manualLight == True and manualSound == False:
+        ''' finishing the programm '''
+        if Button.LEFT_UP in infraredSensor.buttons(3):
+            shutdown = True
+
+        ''' setting manual mode for sound '''
+        if Button.RIGHT_UP in infraredSensor.buttons(2):
+            manualSound = True
+
+        manualLightControl()
+        
+        manualLightControlButtons()
+        manualSoundControlButtons()
+
+        soundControl()
+
+
+    elif manualLight == False and manualSound == True:
+        ''' finishing the programm '''
+        if Button.LEFT_UP in infraredSensor.buttons(3):
+            shutdown = True
+
+        ''' setting manual mode for light '''
+        if Button.RIGHT_UP in infraredSensor.buttons(1):
+            manualLight = True
+
+        manualSoundControl()
+
+        manualLightControlButtons()
+        manualSoundControlButtons()
+
+        lightControl()
+
+    else:
+
+        ''' finishing the programm '''
+        if Button.LEFT_UP in infraredSensor.buttons(3):
+            shutdown = True
+
+        ''' setting manual mode for light '''
+        if Button.RIGHT_UP in infraredSensor.buttons(1):
+            manualLight = True
+
+        ''' setting manual mode for sound '''
+        if Button.RIGHT_UP in infraredSensor.buttons(2):
+            manualSound = True
+
+        manualLightControlButtons()
+        manualSoundControlButtons()
+
+        lightControl()
+        soundControl()
+
+        ''' controlling the room state '''
+        if sensor.distance() < 35:
+            if active == True:
+                ev3.speaker.play_file(SoundFile.GOODBYE)
+                active = False
+            else:
+                if colorSensor.ambient() < 20:
+                    switchLight()
+                switchSound()
+                ev3.speaker.play_file(SoundFile.HELLO)
+                active = True
+
+if light == True:
+    switchLight()
+if sound == True:
+    switchSound()
 
 motor.run_target(500, 20, wait=True)
 ev3.speaker.say("Shutting down Brick")
