@@ -5,6 +5,8 @@ from pybricks.ev3devices import Motor, InfraredSensor, ColorSensor
 from pybricks.parameters import Port, Stop, Button
 from pybricks.media.ev3dev import SoundFile
 
+import os
+
 ev3 = EV3Brick()
 
 motor = Motor(Port.A)
@@ -200,3 +202,4 @@ if sound == True:
 
 motor.run_target(500, 20, wait=True)
 ev3.speaker.say("Shutting down Brick")
+os.system("echo maker | sudo -S poweroff")
