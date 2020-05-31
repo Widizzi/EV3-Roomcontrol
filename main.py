@@ -1,4 +1,5 @@
-#!/usr/bin/env pybricks-micropython
+#!/usr/bin/env pybricks-micropython 
+
 from pybricks.hubs import EV3Brick
 from pybricks.ev3devices import Motor, InfraredSensor, ColorSensor
 from pybricks.parameters import Port, Stop, Button
@@ -7,6 +8,7 @@ from pybricks.media.ev3dev import SoundFile
 ev3 = EV3Brick()
 
 motor = Motor(Port.A)
+soundMotor = Motor(Port.B)
 infraredSensor = InfraredSensor(Port.S3)
 colorSensor = ColorSensor(Port.S2)
 sensor = InfraredSensor(Port.S1)
@@ -14,6 +16,7 @@ sensor = InfraredSensor(Port.S1)
 shutdown = False
 active = False
 light = False
+sound = False
 manual = False
 said = False
 
@@ -23,8 +26,15 @@ def switchLight():
     motor.run_target(500, 0, wait=True)
     motor.run_target(500, 75, wait=False)
 
+def switchSound():
+    global sound
+    sound = not sound
+    soundMotor.run_target(500, 65, wait=True)
+    soundMotor.run_target(500, 0, wait=False)
+
 ev3.speaker.set_volume(100, which='_all_')
 motor.reset_angle(20)
+soundMotor.reset_angle(0)
 motor.run_target(500, 75, wait=True)
 
 while shutdown == False:
@@ -49,6 +59,8 @@ while shutdown == False:
             said = True
     else:
         said = False
+
+    ''' manual mode '''
     while manual == True:
         if light == False:
             if Button.LEFT_UP in infraredSensor.buttons(1):
@@ -81,6 +93,12 @@ while shutdown == False:
             switchLight()
     elif active == False and light == True:
         switchLight()
+
+    ''' controlling the sound in the room '''
+    if active == True and sound == False:
+        switchSound()
+    elif active == False and sound == True:
+        switchSound()
 
     ''' controlling the room state '''
     if sensor.distance() < 35:
