@@ -18,27 +18,36 @@ colorSensor = ColorSensor(Port.S2)
 infraredSensor = InfraredSensor(Port.S3)
 touchSensor = TouchSensor(Port.S4)
 
+# true when ev3 is forced to shutdown
 shutdown = False
+# room state
 active = False
+# light state
 light = False
+# sound state
 sound = False
+# true if manual mode is active
 manualLight = False
 manualSound = False
+# beacon button is toggle. To supress repetition in the loop these booleans will turn true after the first execution 
 said = False
 saidSound = False
 
+# turns on or off the light physically
 def switchLight():
     global light
     light = not light
     motor.run_target(500, 0, wait=True)
     motor.run_target(500, 75, wait=False)
 
+# turn on or off the sound physically
 def switchSound():
     global sound
     sound = not sound
     soundMotor.run_target(500, 63, wait=True)
     soundMotor.run_target(500, 0, wait=False)
 
+# reads remote inputs and sets the corresponding variable (sound part)
 def manualSoundControlButtons():
     global saidSound
     ''' checking buttons for manual sound control '''
@@ -54,6 +63,7 @@ def manualSoundControlButtons():
     else:
         saidSound = False
 
+# reads remote inputs and sets the corresponding variable (light part)
 def manualLightControlButtons():
     global said
     ''' checking buttons for manual sound control '''
@@ -69,6 +79,7 @@ def manualLightControlButtons():
     else:
         said = False
 
+# controls the autonomous sound changes
 def soundControl():
     global active, sound
     ''' controlling the sound in the room '''
@@ -77,6 +88,7 @@ def soundControl():
     elif active == False and sound == True:
         switchSound()
 
+# controls the autonomous light changes
 def lightControl():
     global active, light
     ''' controlling the light in the room '''
@@ -89,6 +101,7 @@ def lightControl():
     elif active == False and light == True:
         switchLight()
 
+# controlls the manual light changes on button presses
 def manualLightControl():
     global light, manualLight
     if light == False:
@@ -100,6 +113,7 @@ def manualLightControl():
     if Button.RIGHT_DOWN in infraredSensor.buttons(1):
         manualLight = False
 
+# controlls the manual sound changes on button presses
 def manualSoundControl():
     global sound, manualSound
     if sound == False:
@@ -211,6 +225,7 @@ while shutdown == False:
                     ev3.speaker.play_file(SoundFile.HELLO)
                     active = True
 
+# this part of code is executed after shutdown is initialized
 if light == True:
     switchLight()
 if sound == True:
@@ -218,4 +233,6 @@ if sound == True:
 
 motor.run_target(500, 20, wait=True)
 ev3.speaker.say("Shutting down Brick")
+
+# this command shuts down the ev3
 os.system("echo maker | sudo -S poweroff")
