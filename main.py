@@ -1,19 +1,22 @@
 #!/usr/bin/env pybricks-micropython 
 
 from pybricks.hubs import EV3Brick
-from pybricks.ev3devices import Motor, InfraredSensor, ColorSensor
-from pybricks.parameters import Port, Stop, Button
+from pybricks.ev3devices import Motor, InfraredSensor, ColorSensor, TouchSensor
+from pybricks.parameters import Port, Stop, Button, Color
 from pybricks.media.ev3dev import SoundFile
+from pybricks.tools import wait, StopWatch
 
 import os
 
 ev3 = EV3Brick()
+watch = StopWatch()
 
 motor = Motor(Port.A)
 soundMotor = Motor(Port.B)
-infraredSensor = InfraredSensor(Port.S3)
-colorSensor = ColorSensor(Port.S2)
 sensor = InfraredSensor(Port.S1)
+colorSensor = ColorSensor(Port.S2)
+infraredSensor = InfraredSensor(Port.S3)
+touchSensor = TouchSensor(Port.S4)
 
 shutdown = False
 active = False
@@ -114,14 +117,29 @@ ev3.speaker.set_volume(100, which='_all_')
 motor.reset_angle(20)
 soundMotor.reset_angle(0)
 motor.run_target(500, 75, wait=True)
+ev3.light.on(Color.GREEN)
+watch.reset()
 
 # main project loop
 while shutdown == False:
 
+    ''' finishing the progamm '''
+    if Button.LEFT_UP in infraredSensor.buttons(4):
+        shutdown = True
+
+    ''' checking touch sensor '''
+    if touchSensor.pressed() == True:
+        if manualLight == False and manualSound == False:
+            manualLight = True
+            manualSound = True
+        else:
+            manualLight = False
+            manualSound = False
+        wait(200)
+
     if manualLight == True and manualSound == True:
-        ''' finishing the progamm '''
-        if Button.LEFT_UP in infraredSensor.buttons(3):
-            shutdown = True
+
+        ev3.light.on(Color.RED)
 
         manualLightControl()
         manualSoundControl()
@@ -131,9 +149,8 @@ while shutdown == False:
 
 
     elif manualLight == True and manualSound == False:
-        ''' finishing the programm '''
-        if Button.LEFT_UP in infraredSensor.buttons(3):
-            shutdown = True
+
+        ev3.light.on(Color.YELLOW)
 
         ''' setting manual mode for sound '''
         if Button.RIGHT_UP in infraredSensor.buttons(2):
@@ -148,9 +165,8 @@ while shutdown == False:
 
 
     elif manualLight == False and manualSound == True:
-        ''' finishing the programm '''
-        if Button.LEFT_UP in infraredSensor.buttons(3):
-            shutdown = True
+
+        ev3.light.off()
 
         ''' setting manual mode for light '''
         if Button.RIGHT_UP in infraredSensor.buttons(1):
@@ -165,9 +181,7 @@ while shutdown == False:
 
     else:
 
-        ''' finishing the programm '''
-        if Button.LEFT_UP in infraredSensor.buttons(3):
-            shutdown = True
+        ev3.light.on(Color.GREEN)
 
         ''' setting manual mode for light '''
         if Button.RIGHT_UP in infraredSensor.buttons(1):
@@ -184,16 +198,18 @@ while shutdown == False:
         soundControl()
 
         ''' controlling the room state '''
-        if sensor.distance() < 35:
-            if active == True:
-                ev3.speaker.play_file(SoundFile.GOODBYE)
-                active = False
-            else:
-                if colorSensor.ambient() < 20:
-                    switchLight()
-                switchSound()
-                ev3.speaker.play_file(SoundFile.HELLO)
-                active = True
+        if watch.time() > 7000:
+            if sensor.distance() < 35:
+                watch.reset()
+                if active == True:
+                    ev3.speaker.play_file(SoundFile.GOODBYE)
+                    active = False
+                else:
+                    if colorSensor.ambient() < 20:
+                        switchLight()
+                    switchSound()
+                    ev3.speaker.play_file(SoundFile.HELLO)
+                    active = True
 
 if light == True:
     switchLight()
