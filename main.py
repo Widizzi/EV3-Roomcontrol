@@ -8,6 +8,18 @@ from pybricks.tools import wait, StopWatch
 
 import os
 
+''' EV3-ROOM-CONTROL
+
+Room Control handles the light and the sound in your room with a lego
+EV3 Robot. It uses the light switch and pressed it with a motor. So it's
+the perfect idea if there isn't already a inbuild smart-home system.
+
+Idea and Code comes from Widizzi
+
+Version-1.0.0
+
+'''
+
 ev3 = EV3Brick()
 watch = StopWatch()
 
