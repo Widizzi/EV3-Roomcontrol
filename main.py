@@ -189,6 +189,18 @@ while shutdown == False:
 
         soundControl()
 
+        ''' controlling the room state '''
+        if watch.time() > 7000:
+            if sensor.distance() < 35:
+                watch.reset()
+                if active == True:
+                    ev3.speaker.play_file(SoundFile.GOODBYE)
+                    active = False
+                else:
+                    switchSound()
+                    ev3.speaker.play_file(SoundFile.HELLO)
+                    active = True
+
 
     elif manualLight == False and manualSound == True:
 
@@ -204,6 +216,19 @@ while shutdown == False:
         manualSoundControlButtons()
 
         lightControl()
+
+        ''' controlling the room state '''
+        if watch.time() > 7000:
+            if sensor.distance() < 35:
+                watch.reset()
+                if active == True:
+                    ev3.speaker.play_file(SoundFile.GOODBYE)
+                    active = False
+                else:
+                    if colorSensor.ambient() < 20:
+                        switchLight()
+                    ev3.speaker.play_file(SoundFile.HELLO)
+                    active = True
 
     else:
 
